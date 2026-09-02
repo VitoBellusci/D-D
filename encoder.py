@@ -10,11 +10,16 @@ class EncoderCNN(nn.Module):
         resenet = model(weights=w.DEFAULT)
         modules = list(resenet.children())[:-1]
         self.backbone = nn.Sequential(*modules)
-
+        # congelamento pesi
+        for param in self.backbone.parameters():
+            param.requires_grad = False
         self.linear = nn.Linear(resenet.fc.in_features, embed_size)
 
     def forward(self, images):
-        features_ext = self.backbone(images)
+        # modalità eval per mantenere la batch normalization
+        features_ext = self.backbone.eval(images)
         features_shaped = features_ext.view(features_ext.shape[0], -1)
 
-        return self.linear(features_shaped)[:-1]
+        features = self.linear(features_shaped)
+
+        return features
